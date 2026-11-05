@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Privacy policy · Finance Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="main" style="max-width: 640px; margin: 0 auto; padding-top: 24px;">
+    <p><a class="inline" href="./">Back to Finance Tracker</a></p>
+    <h1>Privacy policy</h1>
+    <p>Finance Tracker is a personal finance app that runs in your browser. The copy in this repository is a static site. It does not have its own account server, and this policy does not invent a company, mailing address, or support email.</p>
+    <p>The site is published from the GitHub repository <strong>Viizay/finance-tracker</strong>. If that repository has issues enabled, that is the place to write to the publisher. There is no other contact channel.</p>
+
+    <h2>Data on your device</h2>
+    <p>Transactions, budgets, goals, settings, a sync queue, and conflict copies are stored in this browser’s localStorage. Guest data and each Google account’s data use different keys. The app does not send that data to a server operated by this project.</p>
+
+    <h2>Optional Google sign-in</h2>
+    <p>Google sign-in is off until a public OAuth client ID is saved. The client ID is not a secret. The app does not contain a client secret, a refresh token, or a spreadsheet chosen by the publisher.</p>
+    <p>If you connect Google, the browser uses Google Identity Services. The access token stays in memory and is cleared on sign-out or expiry. It is not written to localStorage. When it expires, sync stops until you tap Reconnect or Sync and approve access again. That tap is required; the app does not refresh access in the background.</p>
+    <p>The app asks for these non-sensitive scopes:</p>
+    <ul>
+      <li><code>openid</code>, <code>email</code>, and <code>profile</code> — to read the stable Google account id (<code>sub</code>) and to show your email, so one account’s data is not loaded as another account’s data.</li>
+      <li><code>https://www.googleapis.com/auth/drive.file</code> — to create and edit only files this app creates. It does not request access to all of your Drive or all of your spreadsheets.</li>
+    </ul>
+    <p>After you grant that access, sync creates a spreadsheet named “Finance Tracker” in your own Google Drive. The app does not add a sharing permission. Google holds that file because it is in your account. Google’s policy is at <a class="inline" href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>.</p>
+    <p>A device that has already created the file stores that file’s id locally for the signed-in account. Another device signed into the same account tries to find the file by an app property on files this app created. That lookup is part of the design and has not been confirmed against a live Google account in this repository’s tests.</p>
+
+    <h2>What this app does not do</h2>
+    <ul>
+      <li>It does not sell personal data.</li>
+      <li>It does not include an advertising or analytics SDK.</li>
+      <li>It does not ask for your Google password. Google’s own window does.</li>
+    </ul>
+    <p>GitHub Pages, if the site is hosted there, logs requests under GitHub’s policy: <a class="inline" href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement">GitHub privacy statement</a>.</p>
+
+    <h2>Removing data</h2>
+    <p>Clear all data hides rows on this device and marks them deleted so a later sync can tell the spreadsheet they were removed. Sign out hides the account’s on-device copy behind the guest view; it does not delete that copy and it does not delete the spreadsheet. “Remove this account from this device” deletes the on-device copy for that account. Delete the spreadsheet itself in Google Drive if you want it gone.</p>
+
+    <h2>Conflicts</h2>
+    <p>Google Sheets does not provide a revision token for cell values. If this device and the spreadsheet both changed a row, sync keeps the spreadsheet row and saves the on-device row under Conflicts.</p>
+
+    <p>Last updated 5 November 2026. This date is the policy text date. It is not a claim that Google sync has been tried with a real account.</p>
+  </main>
+</body>
+</html>

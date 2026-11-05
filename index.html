@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Finance" />
+  <meta name="theme-color" content="#0A84FF" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="description" content="Personal finance tracker. Data stays on your device unless you connect a private spreadsheet in your own Google Drive." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180" />
+  <link rel="icon" type="image/png" href="icons/favicon.png" />
+  <title>Finance Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar" id="top-bar">
+      <div class="top-bar-inner">
+        <h1 class="large-title" id="page-title">Dashboard</h1>
+        <button type="button" class="icon-btn" id="settings-btn" aria-label="Settings" title="Settings">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="main" class="main">
+      <section class="view active" id="view-dashboard" data-title="Dashboard">
+        <div class="demo-banner" id="demo-banner" hidden>
+          <strong>Demo data</strong>
+          These are sample numbers, not your finances.
+          <button type="button" class="btn small" id="clear-demo-btn">Clear demo</button>
+        </div>
+        <div class="empty-state" id="dash-empty" hidden>
+          <div class="empty-icon">📊</div>
+          <h2>Start tracking</h2>
+          <p>Add your first income or expense. Nothing is stored until you do. Demo data is labeled and optional.</p>
+          <button type="button" class="btn primary" data-nav="add">Add entry</button>
+          <button type="button" class="btn ghost" id="load-demo-btn">Load demo data</button>
+        </div>
+        <div id="dash-content">
+          <div class="period-chip" id="month-label"></div>
+          <div class="stat-grid">
+            <div class="stat-card income">
+              <span class="stat-label">Income</span>
+              <span class="stat-value" id="stat-income">$0</span>
+            </div>
+            <div class="stat-card expense">
+              <span class="stat-label">Spending</span>
+              <span class="stat-value" id="stat-expense">$0</span>
+            </div>
+            <div class="stat-card net">
+              <span class="stat-label">Net</span>
+              <span class="stat-value" id="stat-net">$0</span>
+            </div>
+            <div class="stat-card rate">
+              <span class="stat-label">Savings rate</span>
+              <span class="stat-value" id="stat-rate">—</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Spending by category</h3>
+            <div class="chart-wrap"><canvas id="chart-categories"></canvas></div>
+            <p class="muted center" id="cat-empty" hidden>No spending this month yet.</p>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Trend (last 12 months)</h3>
+            <div class="chart-wrap tall"><canvas id="chart-trend"></canvas></div>
+          </div>
+          <div class="card" id="recent-card">
+            <div class="card-head">
+              <h3 class="card-title">Recent</h3>
+              <button type="button" class="link-btn" data-nav="add">See all</button>
+            </div>
+            <ul class="tx-list" id="recent-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-add" data-title="Transactions">
+        <div class="segmented" role="tablist">
+          <button type="button" class="seg active" data-tx-filter="all">All</button>
+          <button type="button" class="seg" data-tx-filter="income">Income</button>
+          <button type="button" class="seg" data-tx-filter="expense">Expense</button>
+          <button type="button" class="seg" data-tx-filter="recurring">Recurring</button>
+        </div>
+        <button type="button" class="btn primary block" id="open-entry-modal">+ Add entry</button>
+        <ul class="tx-list" id="tx-list"></ul>
+        <div class="empty-state compact" id="tx-empty" hidden>
+          <p>No transactions yet. Tap <strong>Add entry</strong> to log income or spending.</p>
+        </div>
+      </section>
+
+      <section class="view" id="view-budgets" data-title="Budgets">
+        <p class="lede">Set a monthly limit per category. Progress updates as you spend.</p>
+        <button type="button" class="btn primary block" id="open-budget-modal">+ Add budget</button>
+        <div id="budget-list"></div>
+        <div class="empty-state compact" id="budget-empty" hidden>
+          <p>No budgets yet. Add one for groceries, rent, or any category you want to watch.</p>
+        </div>
+      </section>
+
+      <section class="view" id="view-savings" data-title="Savings">
+        <div class="card">
+          <h3 class="card-title">Current savings balance</h3>
+          <p class="muted">Used for emergency-fund months covered.</p>
+          <div class="row-input">
+            <span class="prefix">$</span>
+            <input type="number" id="savings-balance" inputmode="decimal" min="0" step="0.01" placeholder="0.00" />
+            <button type="button" class="btn small" id="save-balance-btn">Save</button>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card rate">
+            <span class="stat-label">Savings rate</span>
+            <span class="stat-value" id="sav-rate">—</span>
+          </div>
+          <div class="stat-card net">
+            <span class="stat-label">Emergency fund</span>
+            <span class="stat-value" id="sav-ef">—</span>
+            <span class="stat-sub">months covered</span>
+          </div>
+        </div>
+        <div class="card" id="savings-feedback">
+          <h3 class="card-title">How you’re doing</h3>
+          <div id="feedback-body" class="feedback"></div>
+        </div>
+        <div class="card guidelines">
+          <h3 class="card-title">Common guidelines</h3>
+          <ul class="guide-list">
+            <li><strong>20% savings rate</strong> — a common target for long-term wealth building.</li>
+            <li><strong>3–6 month emergency fund</strong> — cash to cover essential spending if income stops.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="view" id="view-plan" data-title="Plan">
+        <div class="card">
+          <div class="card-head">
+            <h3 class="card-title">Goals</h3>
+            <button type="button" class="btn small" id="open-goal-modal">+ Goal</button>
+          </div>
+          <div id="goals-list"></div>
+          <div class="empty-state compact" id="goals-empty" hidden>
+            <p>Add a goal like an emergency fund, vacation, or house down payment.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Projection calculator</h3>
+          <p class="muted">Estimate how savings grow with monthly contributions, return, and inflation.</p>
+          <div class="form-grid">
+            <label>Starting amount ($)
+              <input type="number" id="proj-start" value="0" min="0" step="100" />
+            </label>
+            <label>Monthly contribution ($)
+              <input type="number" id="proj-monthly" value="500" min="0" step="50" />
+            </label>
+            <label>Expected annual return (%)
+              <input type="number" id="proj-return" value="7" min="0" max="30" step="0.1" />
+            </label>
+            <label>Inflation (%)
+              <input type="number" id="proj-inflation" value="2.5" min="0" max="20" step="0.1" />
+            </label>
+            <label>Years
+              <input type="number" id="proj-years" value="10" min="1" max="50" step="1" />
+            </label>
+          </div>
+          <div class="proj-summary">
+            <div><span class="muted">Nominal</span><strong id="proj-nominal">$0</strong></div>
+            <div><span class="muted">Today’s $</span><strong id="proj-real">$0</strong></div>
+          </div>
+          <div class="chart-wrap tall"><canvas id="chart-projection"></canvas></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings" data-title="Settings">
+        <div class="card">
+          <h3 class="card-title">Appearance</h3>
+          <div class="segmented" id="theme-seg">
+            <button type="button" class="seg" data-theme="system">System</button>
+            <button type="button" class="seg" data-theme="light">Light</button>
+            <button type="button" class="seg" data-theme="dark">Dark</button>
+          </div>
+        </div>
+
+        <div class="card" id="google-card">
+          <h3 class="card-title">Google Sheets</h3>
+          <p class="muted">Optional. Each Google account gets a new private spreadsheet in that account’s Drive. This app does not use a shared sheet.</p>
+          <div id="google-unconfigured">
+            <div class="notice warn">
+              Google sign-in is not configured. Add a public OAuth Web client ID to connect. No spreadsheet is created until you do, and live sync has not been verified in this build.
+            </div>
+            <label>OAuth client ID <span class="optional field-help">(public, not a secret or a spreadsheet id)</span>
+              <input class="client-id" id="client-id-input" type="text" autocomplete="off" spellcheck="false" placeholder="123-abc.apps.googleusercontent.com" />
+            </label>
+            <button type="button" class="btn" id="save-client-id">Save client ID on this device</button>
+          </div>
+          <div id="google-configured" hidden>
+            <p class="status-line" id="google-account">Not signed in.</p>
+            <p class="status-line" id="sync-status">Sheets sync is idle.</p>
+            <label class="check-row">
+              <input type="checkbox" id="sync-on-save" />
+              <span>Sync after each save</span>
+            </label>
+            <p class="muted">Sync after save still needs a tap on Reconnect when Google access expires. The app does not refresh access in the background.</p>
+            <div class="btn-row">
+              <button type="button" class="btn primary" id="google-connect">Connect Google</button>
+              <button type="button" class="btn" id="google-sync" hidden>Sync now</button>
+              <button type="button" class="btn" id="google-signout" hidden>Sign out</button>
+            </div>
+            <p id="open-sheet-wrap" hidden><a class="inline" id="open-sheet" href="" target="_blank" rel="noopener">Open my private spreadsheet</a></p>
+            <button type="button" class="btn danger" id="forget-account" hidden>Remove this account from this device</button>
+            <div id="conflict-list"></div>
+          </div>
+          <p class="muted">Setup steps are in <a class="inline" href="docs/GOOGLE_CLOUD_SETUP.md">Google Cloud setup</a>. <a class="inline" href="privacy.html">Privacy policy</a>.</p>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Backup</h3>
+          <p class="muted">Export JSON to keep a copy. Import replaces data on this device. Deleted rows are included so a later sync does not bring them back by accident.</p>
+          <div class="btn-row">
+            <button type="button" class="btn" id="export-btn">Export JSON</button>
+            <button type="button" class="btn" id="import-btn">Import JSON</button>
+            <input type="file" id="import-file" accept="application/json,.json" hidden />
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Demo &amp; data</h3>
+          <button type="button" class="btn" id="settings-demo-btn">Load demo data</button>
+          <button type="button" class="btn danger" id="clear-data-btn">Clear all data</button>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Add to Home Screen</h3>
+          <p class="muted">On iPhone: open in Safari → Share → <strong>Add to Home Screen</strong>. The site must be HTTPS.</p>
+        </div>
+        <p class="version muted">Finance Tracker · <a href="privacy.html">Privacy</a></p>
+      </section>
+    </main>
+
+    <nav class="tab-bar" id="tab-bar" aria-label="Main">
+      <button type="button" class="tab active" data-nav="dashboard" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+        <span>Home</span>
+      </button>
+      <button type="button" class="tab" data-nav="add" aria-label="Transactions">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Add</span>
+      </button>
+      <button type="button" class="tab" data-nav="budgets" aria-label="Budgets">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>Budgets</span>
+      </button>
+      <button type="button" class="tab" data-nav="savings" aria-label="Savings">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <span>Savings</span>
+      </button>
+      <button type="button" class="tab" data-nav="plan" aria-label="Plan">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 3 5-6"/></svg>
+        <span>Plan</span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="modal" id="entry-modal" hidden>
+    <div class="modal-backdrop" data-close="entry-modal"></div>
+    <div class="modal-sheet" role="dialog" aria-labelledby="entry-modal-title">
+      <div class="sheet-handle"></div>
+      <h2 id="entry-modal-title">Add entry</h2>
+      <form id="entry-form">
+        <input type="hidden" id="entry-id" />
+        <div class="segmented">
+          <button type="button" class="seg active" data-type="expense">Expense</button>
+          <button type="button" class="seg" data-type="income">Income</button>
+        </div>
+        <label>Amount
+          <div class="row-input">
+            <span class="prefix">$</span>
+            <input type="number" id="entry-amount" required min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+          </div>
+        </label>
+        <label>Category
+          <select id="entry-category" required></select>
+        </label>
+        <label>Date
+          <input type="date" id="entry-date" required />
+        </label>
+        <label>Note <span class="optional">(optional)</span>
+          <input type="text" id="entry-note" maxlength="120" placeholder="Coffee, paycheck…" />
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="entry-recurring" />
+          <span>Repeat monthly</span>
+        </label>
+        <p class="muted" id="entry-series-note" hidden>This is one monthly series. It is counted once per month. Editing changes the series, not a single month. Don’t also add the same bill as a one-time entry.</p>
+        <div class="btn-row">
+          <button type="submit" class="btn primary flex">Save</button>
+          <button type="button" class="btn" data-close="entry-modal">Cancel</button>
+          <button type="button" class="btn danger" id="entry-delete" hidden>Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="budget-modal" hidden>
+    <div class="modal-backdrop" data-close="budget-modal"></div>
+    <div class="modal-sheet" role="dialog" aria-labelledby="budget-modal-title">
+      <div class="sheet-handle"></div>
+      <h2 id="budget-modal-title">Budget</h2>
+      <form id="budget-form">
+        <input type="hidden" id="budget-id" />
+        <label>Category
+          <select id="budget-category" required></select>
+        </label>
+        <label>Monthly limit ($)
+          <input type="number" id="budget-limit" required min="1" step="1" />
+        </label>
+        <div class="btn-row">
+          <button type="submit" class="btn primary flex">Save</button>
+          <button type="button" class="btn" data-close="budget-modal">Cancel</button>
+          <button type="button" class="btn danger" id="budget-delete" hidden>Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="goal-modal" hidden>
+    <div class="modal-backdrop" data-close="goal-modal"></div>
+    <div class="modal-sheet" role="dialog" aria-labelledby="goal-modal-title">
+      <div class="sheet-handle"></div>
+      <h2 id="goal-modal-title">Goal</h2>
+      <form id="goal-form">
+        <input type="hidden" id="goal-id" />
+        <label>Name
+          <input type="text" id="goal-name" required maxlength="60" placeholder="Emergency fund" />
+        </label>
+        <label>Target amount ($)
+          <input type="number" id="goal-target" required min="1" step="1" />
+        </label>
+        <label>Current amount ($)
+          <input type="number" id="goal-current" min="0" step="1" value="0" />
+        </label>
+        <label>Monthly contribution ($) <span class="optional">(optional)</span>
+          <input type="number" id="goal-monthly" min="0" step="1" placeholder="What you plan to set aside" />
+        </label>
+        <label>Target date
+          <input type="date" id="goal-date" required />
+        </label>
+        <div class="btn-row">
+          <button type="submit" class="btn primary flex">Save</button>
+          <button type="button" class="btn" data-close="goal-modal">Cancel</button>
+          <button type="button" class="btn danger" id="goal-delete" hidden>Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="migrate-modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-sheet" role="dialog" aria-labelledby="migrate-title">
+      <div class="sheet-handle"></div>
+      <h2 id="migrate-title">Move data into this account?</h2>
+      <p id="migrate-copy"></p>
+      <p class="muted">Guest data stays separate unless you choose to move it. Nothing is uploaded until you sync.</p>
+      <div class="btn-row">
+        <button type="button" class="btn primary" id="migrate-move">Move into this account</button>
+        <button type="button" class="btn danger" id="migrate-replace" hidden>Replace this account’s on-device copy</button>
+        <button type="button" class="btn" id="migrate-separate">Keep separate</button>
+        <button type="button" class="btn" id="migrate-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

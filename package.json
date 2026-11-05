@@ -1,0 +1,12 @@
+{
+  "name": "finance-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/model.test.js tests/storage.test.js tests/sync.test.js tests/pages.test.js",
+    "test:browser": "node tests/browser-smoke.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.43.1"
+  }
+}
